@@ -1,4 +1,5 @@
 imon-script
 ===========
+script for imon  
 
-script for imon
+使用方法：
