@@ -6,6 +6,11 @@ doScpJBOSS()
     exit
 }
 
+doScpGUI_UPS()
+{
+    
+}
+
 doScpSSG()
 {   
 	for SSG_LIST in $(cat $PWD/ssg_server_list)
@@ -20,7 +25,7 @@ doScpSSG()
         echo ""
     fi
 
-	scp -r /home/ims/update/SSG/$SSG_Pgt root@$SSG_LIST:/home/ims/update/SSG/ 
+	scp -r /home/ims/update/SSG/$SSG_Pgt root@$SSG_LIST:/home/ims/update/SSG/
     #把安装脚本和更新脚本拷贝到远程主机
     scp  -r /home/ims/update/SCRIPT root@$SSG_LIST:/home/ims/update/
     done
