@@ -6,11 +6,13 @@ doScpJBOSS()
     exit
 }
 
-doScpGUI_UPS()
+doScpGUI_UPS_MULE()
 {
-    for GUI_UPS_LIST in $(cat $PWD/gui_ups_server_list)
+    for GUI_UPS_LIST in $(cat $PWD/gui_ups_mule_server_list)
     do 
     #复制最新的系统包到远程主机
+    ssh root@$SSG_LIST "[-d /home/ims/update/JAVA ]" 
+    STAT=$?
     if [ $STAT = 1 ]; then
         ssh root@$SSG_LIST "mkdir -p /home/ims/update/JAVA"
     else 

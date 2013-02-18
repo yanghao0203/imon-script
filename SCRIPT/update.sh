@@ -282,7 +282,7 @@ doUpdateSRS()
 			echo ""
 			rm -rf $IMS_PATH/srs
 			rm -rf $IMS_PATH/SRS*
-			Srs_Pgt=`ls -lrt $UPLOAD_PATH/SRS/ | sed -n '$p' | awk '{print $9}'`
+			Srs_Pgt=`ls -lrt $UPLOAD_PATH/SRS/ | sed -n '$p' | awk '{print $9}'`  #确保使用的更新包为最新的包
 			cp $UPLOAD_PATH/SRS/$Srs_Pgt $IMS_PATH/ 
 			tar -zxvf $IMS_PATH/SRS*.tar.gz  -C $IMS_PATH/
 			rm -rf $IMS_PATH/SRS*.tar.gz   
