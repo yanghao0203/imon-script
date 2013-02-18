@@ -8,14 +8,25 @@ doScpJBOSS()
 
 doScpGUI_UPS()
 {
-    
+    for GUI_UPS_LIST in $(cat $PWD/gui_ups_server_list)
+    do 
+    #复制最新的系统包到远程主机
+    if [ $STAT = 1 ]; then
+        ssh root@$SSG_LIST "mkdir -p /home/ims/update/JAVA"
+    else 
+        ssh root@$SSG_LIST "rm -rf /home/ims/update/JAVA"     #删除原有系统包文件，确保update目录中系统包为最新
+        ssh root@$SSG_LIST "mkdir -p /home/ims/update/JAVA"
+
+    fi
+    scp  -r /home/ims/update/JAVA root@$SSG_LIST:/home/ims/update/JAVA
+    done
 }
 
 doScpSSG()
 {   
 	for SSG_LIST in $(cat $PWD/ssg_server_list)
     do
-    #找最新的子系统压缩包并拷贝到远程主机
+    #找最新的子系统压缩包并复制到远程主机
     Ssg_Pgt=`ls -lrt | sed -n '$p' | awk '{print $9}'`
     ssh root@$SSG_LIST "[-d /home/ims/update/SSG ]" 
     STAT=$?
@@ -26,7 +37,6 @@ doScpSSG()
     fi
 
 	scp -r /home/ims/update/SSG/$SSG_Pgt root@$SSG_LIST:/home/ims/update/SSG/
-    #把安装脚本和更新脚本拷贝到远程主机
     scp  -r /home/ims/update/SCRIPT root@$SSG_LIST:/home/ims/update/
     done
 
