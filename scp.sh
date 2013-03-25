@@ -26,7 +26,8 @@ doScpGUI_UPS_MULE()
 
 doScpSSG()
 {   
-	for SSG_LIST in $(cat $PWD/ssg_server_list)
+	for SSG_LIST in $(cat $PWD/ssg_server
+        _list)
     do
     #找最新的子系统压缩包并复制到远程主机
     Ssg_Pgt=`ls -lrt | sed -n '$p' | awk '{print $9}'`
@@ -41,7 +42,6 @@ doScpSSG()
 	scp -r /home/ims/update/SSG/$SSG_Pgt root@$SSG_LIST:/home/ims/update/SSG/
     scp  -r /home/ims/update/SCRIPT root@$SSG_LIST:/home/ims/update/
     done
-
 }
 
 doScpSRS()

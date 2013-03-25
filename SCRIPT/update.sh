@@ -81,9 +81,12 @@ doUpdateGUI_UPS()
 			if [ -d "$UPLOAD_PATH/JAVA/one-build" ]; then 
 			echo ""
             echo "GUI and UPS update starting..."
-
+            
+            #清除jboss和hornetq缓存数据
             rm -rf  $JBOSS_HOME/server/default/tmp/* 
 			rm -rf  $JBOSS_HOME/server/default/work/*
+			rm -rf  $JBOSS_HOME/server/hornetq/tmp/*
+			rm -rf  $JBOSS_HOME/server/hornetq/work/*
 			
 #备份旧版本包
 			echo ""
@@ -316,7 +319,7 @@ doUpdateSRS()
 doUpdateSSI()
 {
 		#关闭SSI进程
-		PID=`ps -ef |grep ssi |grep -v grep | awk '{print $2}'`
+		PID=`ps -ef |grep 'ssi -d' |grep -v grep | awk '{print $2}'`
 		if [ -n "$PID" ]; then
 			echo 'begin to ssi kettle id:'
 			echo $PID
@@ -359,10 +362,10 @@ doUpdateSSI()
 			echo ""
             echo "Now replace the old packages..."
 			echo ""
-			rm -rf $IMS_PATH/[ssiSSi]* & sleep 2
+			rm -rf $IMS_PATH/ssi* & sleep 2
 			Ssi_Pgt=`ls -lrt $UPLOAD_PATH/SSI/ | sed -n '$p' | awk '{print $9}'`
 			cp $UPLOAD_PATH/SSI/$Ssi_Pgt $IMS_PATH/ & sleep 3
-			tar -zxvf $IMS_PATH/[ssiSSi]*.tar.gz  -C $IMS_PATH/  & sleep 3
+			tar -zxvf $IMS_PATH/ssi*.tar.gz  -C $IMS_PATH/  & sleep 3
 			#替换配置文件
             /bin/cp $CON_BAKPATH/$DATETIME/ssi/bin/vm.cfg $IMS_PATH/ssi/bin/ & sleep 1
 			/bin/cp $CON_BAKPATH/$DATETIME/ssi/bin/svc.conf $IMS_PATH/ssi/bin & sleep 1
