@@ -1,0 +1,182 @@
+:
+#
+# $Id: dbshut.sh.pp 11-may-2005.19:37:00 vikrkuma Exp $
+# Copyright (c) 1991, 2005, Oracle. All rights reserved.  
+#
+
+###################################
+# 
+# usage: dbshut
+#
+# This script is used to shutdown ORACLE from /etc/rc(.local).
+# It should ONLY be executed as part of the system boot procedure.
+#
+# This script will shutdown all databases listed in the oratab file
+# whose third field is a "Y".  If the third field is set to "Y" and
+# there is no ORACLE_SID for an entry (the first field is a *),
+# then this script will ignore that entry.
+#
+# This script requires that ASM ORACLE_SID's start with a +, and 
+# that non-ASM instance ORACLE_SID's do not start with a +.
+#
+# Note:
+# Use ORACLE_TRACE=T for tracing this script.
+# Oracle Net Listener is NOT shutdown using this script.
+#
+# The progress log for each instance shutdown is logged in file 
+# $ORACLE_HOME/shutdown.log.
+#
+# To configure:
+# 1) Set ORATAB:
+#    On Solaris 
+#      ORATAB=/var/opt/oracle/oratab
+#    All other UNIX platforms
+#      ORATAB=/etc/oratab
+#
+# 2) Update $ORATAB/oratab with Database Instances that need to be shutdown.
+#    Entries are of the form:
+#    $ORACLE_SID:$ORACLE_HOME:<N|Y>:
+#    An example entry:
+#    main:/usr/lib/oracle/emagent_10g:Y
+#
+#####################################
+
+trap 'exit' 1 2 3
+case $ORACLE_TRACE in
+T) set -x ;;
+esac
+
+# Set path if path not set (if called from /etc/rc)
+case $PATH in
+  "") PATH=/bin:/usr/bin:/etc
+      export PATH ;;
+esac
+
+# Save LD_LIBRARY_PATH
+SAVE_LLP=$LD_LIBRARY_PATH
+
+# Set this in accordance with the platform
+ORATAB=/etc/oratab
+if [ ! $ORATAB ] ; then
+  echo "Set ORATAB to dir where oratab file is located"
+  exit 1;
+fi
+
+# Stops an instance
+stopinst() {
+  ORACLE_SID=`echo $LINE | awk -F: '{print $1}' -`
+  if [ "$ORACLE_SID" = '*' ] ; then
+    ORACLE_SID=""
+  fi
+# Called programs use same database ID
+  export ORACLE_SID
+  ORACLE_HOME=`echo $LINE | awk -F: '{print $2}' -`
+# Called scripts use same home directory
+  export ORACLE_HOME
+# Put $ORACLE_HOME/bin into PATH and export.
+  PATH=$ORACLE_HOME/bin:/bin:/usr/bin:/etc ; export PATH
+# add for bug 652997
+  LD_LIBRARY_PATH=${SAVE_LLP}:${ORACLE_HOME}/lib ; export LD_LIBRARY_PATH
+  PFILE=${ORACLE_HOME}/dbs/init${ORACLE_SID}.ora
+
+# See if it is a V6 or V7 database
+  VERSION=undef
+  if [ -f $ORACLE_HOME/bin/sqldba ] ; then
+    SQLDBA=sqldba
+    VERSION=`$ORACLE_HOME/bin/sqldba command=exit | awk '
+      /SQL\*DBA: (Release|Version)/ {split($3, V, ".") ;
+      print V[1]}'`
+    case $VERSION in
+      "6") ;;
+      *) VERSION="internal" ;;
+    esac
+  else
+    if [ -f $ORACLE_HOME/bin/svrmgrl ] ; then
+      SQLDBA=svrmgrl
+      VERSION="internal"
+    else
+      SQLDBA="sqlplus /nolog"
+    fi
+  fi
+
+  case $VERSION in
+    "6")  sqldba command=shutdown ;;
+    "internal")  $SQLDBA <<EOF
+connect internal
+shutdown immediate
+EOF
+     ;;
+     *)  $SQLDBA <<EOF
+connect / as sysdba
+shutdown immediate
+quit
+EOF
+     ;;
+  esac
+
+  if test $? -eq 0 ; then
+    echo "${INST} \"${ORACLE_SID}\" shut down."
+  else
+    echo "${INST} \"${ORACLE_SID}\" not shut down."
+  fi
+}
+
+#
+# Loop for every entry in oratab file and and try to shut down
+# that ORACLE
+#
+# Following loop shuts down 'Database Instance[s]'
+
+cat $ORATAB | while read LINE
+do
+  case $LINE in
+    \#*)                ;;        #comment-line in oratab
+    *)
+    # Proceed only if last field is 'Y'.
+    # Entries whose last field is not Y or N are not DB entry, ignore them.
+    if [ "`echo $LINE | awk -F: '{print $NF}' -`" = "Y" ] ; then
+      ORACLE_SID=`echo $LINE | awk -F: '{print $1}' -`
+      if [ "$ORACLE_SID" = '*' ] ; then
+        # NULL SID - ignore
+        ORACLE_SID=""
+        continue
+      fi
+    if [ `echo $ORACLE_SID | cut -b 1` != '+' ]; then
+      INST="Database instance"
+      ORACLE_HOME=`echo $LINE | awk -F: '{print $2}' -`
+      LOG=$ORACLE_HOME/shutdown.log
+      stopinst >> $LOG 2>&1
+    fi
+  fi
+  ;;
+  esac
+done
+
+#
+# Following loop shuts down 'ASM Instance[s]'
+#
+
+cat $ORATAB | while read LINE
+do
+  case $LINE in
+    \#*)                ;;        #comment-line in oratab
+    *)
+    # Proceed only if last field is 'Y'.
+    # Entries whose last field is not Y or N are not DB entry, ignore them.
+    if [ "`echo $LINE | awk -F: '{print $NF}' -`" = "Y" ] ; then
+      ORACLE_SID=`echo $LINE | awk -F: '{print $1}' -`
+      if [ "$ORACLE_SID" = '*' ] ; then
+        # NULL SID - ignore
+        ORACLE_SID=""
+        continue
+      fi
+    if [ `echo $ORACLE_SID | cut -b 1` = '+' ]; then
+      INST="ASM instance"
+      ORACLE_HOME=`echo $LINE | awk -F: '{print $2}' -`
+      LOG=$ORACLE_HOME/shutdown.log
+      stopinst >> $LOG 2>&1
+    fi
+  fi
+  ;;
+  esac
+done
