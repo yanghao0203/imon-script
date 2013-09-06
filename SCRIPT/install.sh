@@ -1,7 +1,7 @@
 #!/bin/sh -
 #本脚本为系统应用环境搭建脚本,包括JDK,JBOSS,ESB,Tomcat,dic,FTP,ORACLE等的安装，安装前请确保安装文件都准备完毕，安装文件建议放置于/home/ims/update目录下
-#LOCAL_IP=` ifconfig | grep "inet addr" | sed -n 1p | awk '{print $2}' | awk -F: '{print $2}' `    #此处默认本地网卡为eth0，若不是，修改截取的行                                         #本机IP(该IP用于JBOSS配置，一般为内网IP)
-LOCAL_IP=10.130.128.15
+LOCAL_IP=` ifconfig | grep "inet addr" | sed -n 1p | awk '{print $2}' | awk -F: '{print $2}' `    #此处默认本地网卡为eth0，若不是，修改截取的行                                         #本机IP(该IP用于JBOSS配置，一般为内网IP)
+#LOCAL_IP=10.130.128.15
 LOCAL_NAME=`uname -a | awk '{print $2}'`
 #SRS相关参数
 ESB_URL=http://10.130.128.15:9081
@@ -106,13 +106,13 @@ doInstallJDK()
 				chmod a+x /usr/java/jdk*
 				cd /usr/java && ./jdk*
 				rm -rf /usr/java/jdk-*
-				JAVANAME=`ls -l /usr/java | grep jdk1 | sed -n 1p | awk '{print $9}'`
+				JAVANAME=`basename /usr/java/jdk*`
 				JAVA_HOME=/usr/java/$JAVANAME  #JDK主目录
 		fi
 		
 		#/etc/profile
 		echo "export JAVA_HOME=$JAVA_HOME" >> /etc/profile
-		echo 'export PATH=$JAVA_HOME/bin:$PATH'  >> /etc/profile
+		echo "export PATH=$JAVA_HOME/bin:$PATH"  >> /etc/profile
 		source /etc/profile
 
 		doChoose
@@ -135,7 +135,7 @@ doInstallJMS()
 			JBOSSNAME=`ls -l $IMS_PATH | grep jboss | sed -n 1p | awk '{print $9}'`   
 			JBOSS_HOME=$IMS_PATH/$JBOSSNAME                                           #jboss主目录
 			echo "export JBOSS_HOME=$JBOSS_HOME" >> /etc/profile
-			echo 'export PATH=$PATH:$JBOSS_HOME/bin' >> /etc/profile
+			echo "export PATH=$PATH:$JBOSS_HOME/bin" >> /etc/profile
 			source /ect/profile
 		
 			#JMS config
@@ -252,6 +252,8 @@ doInstallSRS()
     sed -e '2s/.*/VMS_NAME=SRS_'$LOCAL_NAME'/' -e '3s/.*/VMS_IP_ADDR='$LOCAL_IP'/' -e '28s#.*#ESB_URL='$ESB_URL'#' $TMP_FILE >  $IMS_PATH/srs/bin/vm.cfg
     #svc.conf
     rm -rf $TMP_FILE
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../lib:/usr/local/lib"  >> /etc/profile
+    source /etc/profile
 
     doChoose
 }
@@ -267,9 +269,9 @@ doInstallSSI()
 
     sleep 3  
  	#upload package
-	cp $UPDATE_PATH/SSI/[ssiSSi]*.tar.gz $IMS_PATH
-	tar -zxvf $IMS_PATH/[ssiSSi]*.tar.gz -C $IMS_PATH > /dev/null
-	rm -rf $IMS_PATH/[ssiSSi]*.tar.gz 
+	cp $UPDATE_PATH/SSI/SSi*.tar.gz $IMS_PATH
+	tar -zxvf $IMS_PATH/SSi*.tar.gz -C $IMS_PATH > /dev/null
+	rm -rf $IMS_PATH/SSi*.tar.gz 
 	cd $IMS_PATH/ssi && sh install_ssi.sh
 	#echo $PWD
     #vm.cfg 
@@ -277,6 +279,8 @@ doInstallSSI()
     sed -e '2s/.*/VMS_NAME=SSI_'$LOCAL_NAME'/' -e '3s/.*/VMS_IP_ADDR='$LOCAL_IP'/' -e '10s#.*#WEB_INTER_URL='$WEB_INTER_URL'#' -e '14s#.*#HTTP_URL='$HTTP_URL'#' -e '19s#.*#SNAPSHOT_LIB_PATH='$SNAPSHOT_LIB_PATH'#' -e '22s#.*#SNAPSHOT_SAVE_PATH='$SNAPSHOT_SAVE_PATH'#' -e '25s#.*#FILE_SEARCH_PATH='$FILE_SEARCH_PATH'#' $TMP_FILE >  $IMS_PATH/ssi/bin/vm.cfg
     #svc.conf
     rm -rf $TMP_FILE
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../lib:/usr/local/lib"  >> /etc/profile
+    source /etc/profile
 
     doChoose
 }
@@ -294,7 +298,6 @@ doInstallMulStr()
 	cp $UPDATE_PATH/multiStreamer/multiStreamer*.tar.gz $IMS_PATH
 	tar -zxvf $IMS_PATH/multiStreamer*.tar.gz -C $IMS_PATH > /dev/null
 	rm -rf $IMS_PATH/multiStreamer*.tar.gz 
-#	cd $IMS_PATH/$Mul_NAME && sh install_ssi.sh
 
 	#echo $PWD
     #vm.cfg 
@@ -302,6 +305,8 @@ doInstallMulStr()
     sed -e '2s/.*/VMS_NAME=_'$LOCAL_NAME'/' -e '3s/.*/VMS_IP_ADDR='$LOCAL_IP'/' -e '10s#.*#QCS_URL='$QCS_URL'#'  $TMP_FILE >  $IMS_PATH/multiStreamer/bin/vm.cfg
     #svc.conf
     rm -rf $TMP_FILE
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../lib:/usr/local/lib"  >> /etc/profile
+    source /etc/profile
 
     doChoose
 }
@@ -327,6 +332,8 @@ doInstallVCRS()
     sed -e '2s/.*/VMS_NAME=_'$LOCAL_NAME'/' -e '3s/.*/VMS_IP_ADDR='$LOCAL_IP'/' -e '10s#.*#QCS_URL='$QCS_URL'#'  $TMP_FILE >  $IMS_PATH/VCRS*/bin/vm.cfg
     #svc.conf
     rm -rf $TMP_FILE
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../lib:/usr/local/lib"  >> /etc/profile
+    source /etc/profile
 
     doChoose
 }

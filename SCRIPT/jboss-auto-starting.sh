@@ -8,7 +8,7 @@
 JBOSS_BIN=$JBOSS_HOME/bin
 PID1=`ps -ef | grep jboss | grep -v hornetq | grep -v grep | grep -v jbossd | sed -n 1p | awk '{print $2}'`
 PID2=`ps -ef | grep jboss | grep hornetq | grep -v grep | sed -n 1p | awk '{print $2}'`   
-#这边有个Bug，由于脚本名称就是jbossd，这边会导致PID2的值出现该脚本的pid，这边使用grep -v jbossd过滤掉了
+#这边有个Bug，由于脚本名称就是jbossd，这边会导致PID2的值出现该脚本的pid，会影响到后续的PID值的判断，这边使用grep -v jbossd过滤掉了
 STATUS=1
 
 status(){
